@@ -15,16 +15,16 @@ public class MyBigInteger{
     public MyBigInteger(String p) {
         int i = 0; //counter
         if (p.matches("^[0 - 9]+$")){ //looks to see if there are any letters in the string
-            for (int i = 0; i < p.length(); i++) { 
+            for (int i = 0; i < p.length(); i++) {
                 bigI.addLast(Integer.parseInt(p.substring(i, i + 1))); //separates the string by letter and turns it into an int
             }
-            
+
             //removes zeros in the beginning of the Linked List if there are any
             while(bigI.get(i) == 0) {
                 bigI.remove(i);
                 i++;
             }
-                
+
         } else {
             System.out.println("numeric values detected"); //throws error
         }
@@ -34,10 +34,16 @@ public class MyBigInteger{
     public int getSize() {
         return bigI.size;
     }
-    
+
     public int toNumber(){
-        
-    })
+        int out = 0;
+        for (int i = 0; i < bigI.size; i++){
+            out *= 10;
+            out += bigI.get(i);
+        }
+
+        return out;
+    }
 
     //helper method to return index value
     public int get(int index) {
@@ -53,6 +59,7 @@ public class MyBigInteger{
         String newNumberString; //creates a string to put new number in in order to create new MyBigInteger
         int out = 0; //output for whole numbers
 
+        /*
         //turning other MyBigInteger into an int
         for (int i = 0; i < other.getSize(); i++){
             out *= 10;
@@ -60,6 +67,9 @@ public class MyBigInteger{
         }
 
         otherNumber = out; //sets total other number
+         */
+        otherNumber = other.toNumber();
+
         out = 0; //resets out
 
         //turning this MyBigInteger into an int
@@ -67,8 +77,8 @@ public class MyBigInteger{
             out *= 10;
             out += bigI.get(i);
         }
-
         thisNumber = out; //sets total this number
+
 
         newNumber = otherNumber + thisNumber; //sets new number
         newNumberString = Integer.toString(newNumber); //turns new number into string
@@ -81,16 +91,36 @@ public class MyBigInteger{
     // returns true if and only if the two big integers are equal
     public boolean equals(Object other) {
         boolean result = false;
-        int i = 0; //counter
-        while(bigI.get(i).equals(other))
-        
-        
+        for (int i = 0; i < bigI.size; i++) {
+            if (bigI.get(i).equals(other)) {
+                result = true;
+            } else {
+                result = false;
+                break;
+            }
+
+        }
         return result;
     }
     // returns true if and only if this MyBigInteger is less than other MyBigInteger
 
     public boolean lessThan(MyBigInteger other) {
+        boolean result = false; //return variable
+        int thisNumber, otherNumber;
+        int out = 0;
 
-    }
+        //turning this MyBigInteger into an int
+        for (int i = 0; i < bigI.size; i++) {
+            out *= 10;
+            out += bigI.get(i);
+        }
+
+        thisNumber = out;
+
+        otherNumber = other.toNumber();
+
+        if(bigI.size < other.getSize()){
+            result = true;
+    } else if()
 }
 }
