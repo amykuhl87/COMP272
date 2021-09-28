@@ -1,37 +1,96 @@
-
+import java.util.LinkedList;
 
 public class MyBigInteger{
 
     MyLinkedList<Integer> bigI;
-    
+
     public MyBigInteger () {
-        
-        bigI =new MyLinkedList<>();
+
+        bigI = new MyLinkedList<>();
     }
-    
+
     // takes a numerically valued String p and stores it one digit at a time in the linked list
-    // example, MyBigInteger("383023322") will store the integer 383023322 in the linked list 
-    // one digit per node. 
+    // example, MyBigInteger("383023322") will store the integer 383023322 in the linked list
+    // one digit per node.
     public MyBigInteger(String p) {
-        
-        
+        int i = 0; //counter
+        if (p.matches("^[0 - 9]+$")){ //looks to see if there are any letters in the string
+            for (int i = 0; i < p.length(); i++) { 
+                bigI.addLast(Integer.parseInt(p.substring(i, i + 1))); //separates the string by letter and turns it into an int
+            }
+            
+            //removes zeros in the beginning of the Linked List if there are any
+            while(bigI.get(i) == 0) {
+                bigI.remove(i);
+                i++;
+            }
+                
+        } else {
+            System.out.println("numeric values detected"); //throws error
+        }
+    }
+
+    //helper method to return size
+    public int getSize() {
+        return bigI.size;
     }
     
+    public int toNumber(){
+        
+    })
+
+    //helper method to return index value
+    public int get(int index) {
+        return bigI.get(index);
+    }
     //add(..) adds this MyBigInteger to other MyBigInteger and returns the sum as a MyBigInteger
     // the original Big Integers don't change.
-    public MyBigInteger add(MyBigInteger other) {
-        
-        
+    public MyBigInteger add(MyBigInteger other){
+
+        int otherNumber; //putting other number back together
+        int thisNumber; //putting og number back together
+        int newNumber; //a place to put the new number
+        String newNumberString; //creates a string to put new number in in order to create new MyBigInteger
+        int out = 0; //output for whole numbers
+
+        //turning other MyBigInteger into an int
+        for (int i = 0; i < other.getSize(); i++){
+            out *= 10;
+            out += other.get(i);
+        }
+
+        otherNumber = out; //sets total other number
+        out = 0; //resets out
+
+        //turning this MyBigInteger into an int
+        for (int i = 0; i < bigI.size; i++) {
+            out *= 10;
+            out += bigI.get(i);
+        }
+
+        thisNumber = out; //sets total this number
+
+        newNumber = otherNumber + thisNumber; //sets new number
+        newNumberString = Integer.toString(newNumber); //turns new number into string
+
+        MyBigInteger sum = new MyBigInteger(newNumberString); //turns new number into a MyBigInteger
+        return sum; //returns sum
     }
-    
+
+
     // returns true if and only if the two big integers are equal
     public boolean equals(Object other) {
+        boolean result = false;
+        int i = 0; //counter
+        while(bigI.get(i).equals(other))
         
+        
+        return result;
     }
     // returns true if and only if this MyBigInteger is less than other MyBigInteger
-    
+
     public boolean lessThan(MyBigInteger other) {
-        
+
     }
-    }
+}
 }
