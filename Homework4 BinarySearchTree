@@ -1,33 +1,52 @@
 public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
 
-     public BinarySearchTree() {
-        
+    public BinarySearchTree() {
+
     }
     public BinarySearchTree(E val) {
-        
+
+    }
+
+    // returns true if BST has val else false.
+    public boolean contains (E val) {
+    boolean output = false;
+    int compare = val.compareTo(root.getInfo());
+    if(compare == 0){
+        output = true;
+    } else if (compare < 0 && root.getLeft() != null && root.getLeft() == val){
+        output = true;
+    } else if (compare > 0 && root.getRight() != null && root.getRight() == val){
+        output = true;
     }
     
-// returns true if BST has val else false.
-    public boolean contains (E val) {
-       
-        
+    return output;
     }
-// inserts val at the right place satisfying search tree properties, should handle if the tree is empty
+    // inserts val at the right place satisfying search tree properties, should handle if the tree is empty
 // if value is already there then donâ€™t insert it again
     public void insert(E val) {
 
 
-         }
+    }
 
-// returns the minimum value stored in the tree
-public E findMin() {
+    // returns the minimum value stored in the tree
+    public E findMin() {
+        E result = null;
 
-}
 
-// returns the maximum value stored in the tree
-public E findMax() {
-}
-    
+
+        return result;
+    }
+
+    // returns the maximum value stored in the tree
+    public E findMax() {
+        E result = null;
+
+
+
+
+        return result;
+    }
+
     public static void main(String[] args) {
         BinarySearchTree<Integer> bt= new BinarySearchTree<>();
         bt.insert(5);
@@ -37,6 +56,6 @@ public E findMax() {
         bt.insert(8);
         bt.insert(4);
     }
-    
-             
+
+
 }
