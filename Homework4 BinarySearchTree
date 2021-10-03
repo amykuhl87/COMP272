@@ -1,68 +1,89 @@
 public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
 
     public BinarySearchTree() {
-
+    size = 0;
+    root = null;
     }
     public BinarySearchTree(E val) {
-
+    root = new Node(val);
+    size = 1; //root node only
     }
 
     // returns true if BST has val else false.
     public boolean contains (E val) {
-    boolean output = false;
-    int compare = val.compareTo(root.getInfo());
-    if(compare == 0){
-        output = true;
-    } else if (compare < 0 && root.getLeft() != null && root.getLeft() == val){
-        output = true;
-    } else if (compare > 0 && root.getRight() != null && root.getRight() == val){
-        output = true;
+        return containsHelper(root, val);
     }
 
-    return output;
+    //contains helper method
+    private boolean containsHelper(Node node, E item){
+        boolean result = false;
+
+        if(root == null){
+            return false;
+        }
+        if(root.getInfo() == item){
+            return true;
+        }
+
+        int compareResults = item.compareTo((E)node.getInfo());
+
+        if(compareResults < 0){
+            result = containsHelper(node.left, item);
+        } else if(compareResults > 0){
+            result = containsHelper(node.right, item);
+        } else {
+            result = true;
+        }
+
+        return result;
     }
+
+
     // inserts val at the right place satisfying search tree properties, should handle if the tree is empty
 // if value is already there then donâ€™t insert it again
     public void insert(E val) {
         //calls a recursive method to add nodes
         root = insertRecursive(root, val);
     }
-    
+
     Node insertRecursive(Node root, E key){
         //if the tree is empty, it returns a new node
         if(root == null){
             root = new Node(key);
             return root;
         }
-        
+
         //if there are nodes, moves down the tree
         if(key.compareTo((E)root.getInfo()) < 0 ){ //if the value comes before the set info
             root.left = insertRecursive(root.left, key);
         } else if (key.compareTo((E)root.getInfo()) > 0){ //if the value comes after the set info
             root.right = insertRecursive(root.right, key);
         }
-        
+
         //returns information
         return root;
     }
 
     // returns the minimum value stored in the tree
     public E findMin() {
-        E result = null;
+        Node current = root;
 
+        while(current.left != null){
+            current = current.left;
+        }
 
-
-        return result;
+        return (E)current.getInfo();
     }
 
     // returns the maximum value stored in the tree
     public E findMax() {
-        E result = null;
+        Node current = root;
 
+        while(current.right != null){
+            current = current.right;
+        }
 
-
-
-        return result;
+        return (E)current.getInfo();
     }
 
     public static void main(String[] args) {
@@ -73,6 +94,10 @@ public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
         bt.insert(20);
         bt.insert(8);
         bt.insert(4);
+        System.out.println(bt.findMin());
+        System.out.println(bt.findMax());
+        System.out.println(bt.contains(10));
+        System.out.println(bt.contains(15));
     }
 
 
