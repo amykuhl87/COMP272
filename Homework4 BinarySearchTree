@@ -18,14 +18,32 @@ public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
     } else if (compare > 0 && root.getRight() != null && root.getRight() == val){
         output = true;
     }
-    
+
     return output;
     }
     // inserts val at the right place satisfying search tree properties, should handle if the tree is empty
 // if value is already there then donâ€™t insert it again
     public void insert(E val) {
-
-
+        //calls a recursive method to add nodes
+        root = insertRecursive(root, val);
+    }
+    
+    Node insertRecursive(Node root, E key){
+        //if the tree is empty, it returns a new node
+        if(root == null){
+            root = new Node(key);
+            return root;
+        }
+        
+        //if there are nodes, moves down the tree
+        if(key.compareTo((E)root.getInfo()) < 0 ){ //if the value comes before the set info
+            root.left = insertRecursive(root.left, key);
+        } else if (key.compareTo((E)root.getInfo()) > 0){ //if the value comes after the set info
+            root.right = insertRecursive(root.right, key);
+        }
+        
+        //returns information
+        return root;
     }
 
     // returns the minimum value stored in the tree
