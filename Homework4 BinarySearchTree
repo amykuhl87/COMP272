@@ -10,37 +10,29 @@ public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
     }
 
     // returns true if BST has val else false.
+    //reference stack overflow
     public boolean contains (E val) {
-        return containsHelper(root, val);
-    }
-
-    //contains helper method
-    private boolean containsHelper(Node node, E item){
+        Node current = root;
         boolean result = false;
 
-        if(root == null){
-            return false;
-        }
-        if(root.getInfo() == item){
-            return true;
-        }
+        int compare = val.compareTo((E)current.getInfo()); //logs the difference between the value and the information stored in the node
 
-        int compareResults = item.compareTo((E)node.getInfo());
-
-        if(compareResults < 0){
-            result = containsHelper(node.left, item);
-        } else if(compareResults > 0){
-            result = containsHelper(node.right, item);
-        } else {
+        if(compare == 0) //if there is no difference between the two values, compare will be zero therefore the result would be true
             result = true;
-        }
+        if (compare < 0 && current.left != null && current.left.getInfo() == val) //if compare is in the negative while current.left isn't null and the information at left is equal to val, it will return true
+            result = true;
+        if(compare > 0 && current.right != null && current.right.getInfo() == val) //if compare is greater than zero with current.right isn't null and the information at right is equal to val, it will return true
+            result = true;
 
-        return result;
+        return result; //return statement
     }
+
 
 
     // inserts val at the right place satisfying search tree properties, should handle if the tree is empty
 // if value is already there then donâ€™t insert it again
+
+    //reference geeks for geeks
     public void insert(E val) {
         //calls a recursive method to add nodes
         root = insertRecursive(root, val);
@@ -97,7 +89,8 @@ public class BinarySearchTree<E extends Comparable<E>> extends BinaryTree<E> {
         System.out.println(bt.findMin());
         System.out.println(bt.findMax());
         System.out.println(bt.contains(10));
-        System.out.println(bt.contains(15));
+        System.out.println(bt.contains(2));
+
     }
 
 
