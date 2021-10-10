@@ -1,0 +1,193 @@
+
+import java.util.*;
+public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
+
+    private ArrayList<E> heap;
+    private E root;
+    private int size;
+
+    //following 5 methods referenced from geeks4geeks
+    private int parent(int pos){
+        return (pos - 1) / 2;
+    }
+
+    private int leftChild(int pos){
+        return (2 * pos);
+    }
+
+    private int rightChild(int pos){
+        return (2 * pos) + 1;
+    }
+
+    private void swap(int fpos, int spos){
+        E tmp1, tmp2;
+        tmp1 = heap.get(fpos); //gets info at first position
+        tmp2 = heap.get(spos); //gets info at second position
+        heap.set(fpos, tmp2); //replaces info at first position with info at second position
+        heap.set(spos, tmp1); //replaces info at second position with info at first position
+    }
+
+    //reference textbook
+    private void swapList(List<E> list, int fpos, int spos){
+        E tmp1, tmp2;
+        tmp1 = list.get(fpos);
+        tmp2 = list.get(spos);
+        list.set(fpos, tmp2);
+        list.set(spos, tmp1);
+    }
+
+    private boolean isLeaf(int pos){
+        boolean value = false;
+        if(pos > (size /2) && pos <= size){
+            value = true;
+        }
+        return value;
+    }
+
+    // construct an empty Heap using ArrayList
+    // with root at index 0.
+    // don't use binary tree for implementing the heap.
+    public MaxHeap(){
+        heap = new ArrayList<E>();
+        root = null;
+        size = 0;
+    }
+    // returns max value
+    public E findMax() {
+        return root; //since this is a max heap, the larger value is contained at root position
+    }
+
+    // adds a new value to the heap at the end of the Heap and
+    // adjusts values up to the root to ensure Max heap property is satisfied.
+    // parent of node at i is given by the formula (i-1)/2
+    // throw appropriate exception
+    public void addHeap(E val) {
+        heap.set(heap.size(), val);
+
+        int current = heap.size(); //gets index value of last (newest) element
+
+        while(heap.get(current).compareTo(heap.get(parent(current))) > 0){ //while current is greater than the parent of current
+            swap(current, parent(current)); //swap current with the parent of current
+            current = parent(current); //the parent of current is the new current
+        }
+        size++;
+
+        //exception
+        if(heap.get(current).compareTo(heap.get(parent(current))) == 0){ //exception if the same value is added twice
+            System.out.println("There are two of the same values, no need to add a second");
+            heap.remove(val); //removes redundant value
+        }
+    }
+
+    //returns the max value at the root of the heap by swapping the last value
+    // and percolating the value down from the root to preserve max heap property
+    // children of node at i are given by the formula 2i+1,2i+2, to not exceed the
+    // bounds of the Heap index, namely, 0 ... size()-1.
+    // throw appropriate exception
+    public E removeHeap() {
+        E tmp1, tmp2;
+        tmp1 = root;
+        tmp2 = heap.get(heap.size() - 1);
+        int current = heap.size() - 1;
+
+        root = tmp2;
+        heap.set(heap.size() - 1, tmp1);
+
+        while(heap.get(current).compareTo(heap.get(parent(current))) > 0){ //while current is greater than the parent of current
+            swap(current, parent(current)); //swap current with the parent of current
+            current = parent(current); //the parent of current is the new current
+        }
+
+        return root;
+    }
+
+    void percDown(List<E> a, int i, int n){
+        int child ;
+        E tmp;
+
+        for(tmp = a.get(i); leftChild(i) < n; i = child) {
+            child = leftChild(i);
+            if (child != n - 1 && a.get(child).compareTo(a.get(child + 1)) < 0) {
+                child++;
+            }
+            if (tmp.compareTo(a.get(child)) < 0)
+                a.set(i, a.get(child));
+            else
+                break;
+        }
+        a.set(i, tmp);
+    }
+    //reference textbook
+    // takes a list of items E and builds the heap and then prints
+    // decreasing values of E with calls to removeHeap().
+    public void heapSort(List<E> list){
+        for(int i = list.size() / 2 - 1; i >= 0; i--)
+            percDown(list, i, list.size());
+        for(int i = list.size() - 1; i > 0; i--){
+            swapList(list, 0, i);
+            percDown(list, 0, i);
+        }
+    }
+
+    // merges the other maxheap with this maxheap to produce a new maxHeap.  
+    public void heapMerge(MaxHeap<E> other){
+        int newHeapSize = other.size();
+        int ogHeapSize = heap.size();
+        MaxHeap<E> newHeap = new MaxHeap<>();
+        for(int i = 0; i < newHeapSize; i++){
+            newHeap.addHeap(other.get(i));
+        }
+        for(int i = 0; i < ogHeapSize; i++){
+            newHeap.addHeap(heap.get(i));
+        }
+    }
+
+
+
+    //takes a list of items E and builds the heap by calls to addHeap(..)
+    public void buildHeap(List<E> list) {
+        MaxHeap<E> newHeap = new MaxHeap<>();
+        for(int i = 0; i < list.size(); i++){
+            newHeap.addHeap(list.get(i));
+        }
+    }
+
+    private void heapify(int pos){
+
+        if(isLeaf(pos))
+            return;
+
+        if(heap.get(pos).compareTo(heap.get(leftChild(pos))) < 0 || heap.get(pos).compareTo(heap.get(rightChild(pos))) < 0) {
+            if(heap.get(leftChild(pos)).compareTo(heap.get(rightChild(pos))) > 0){
+                swap(pos, leftChild(pos));
+                heapify(leftChild(pos));
+            } else {
+                swap(pos, rightChild(pos));
+                heapify(rightChild(pos));
+            }
+        }
+    }
+
+    public void print(){
+        for(int i = 0; i <= size / 2; i++){
+            System.out.println(" parent: " + heap.get(i) + " left child : " + heap.get(leftChild(i)) + " right child : " + heap.get(rightChild(i)));
+        }
+    }
+
+    public static void main(String[] args){
+        System.out.println("mac heap is : ");
+
+        MaxHeap newHeap = new MaxHeap<>();
+
+        newHeap.addHeap(4);
+        newHeap.addHeap(10);
+        newHeap.addHeap(12);
+        newHeap.addHeap(14);
+        newHeap.addHeap(20);
+
+        newHeap.print();
+
+    }
+
+
+}
