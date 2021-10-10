@@ -2,7 +2,7 @@ import java.security.InvalidParameterException;
 import java.util.*;
 public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
 
-    private ArrayList<E> heap;
+
 
     private int parent(int pos){
         return (pos - 1) / 2;
@@ -18,24 +18,44 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
 
 
     //reference textbook
-    private void swap(int fpos, int spos){
+    public void swap(int fpos, int spos){
         E tmp1, tmp2;
-        tmp1 = heap.get(fpos); //gets info at first position
-        tmp2 = heap.get(spos); //gets info at second position
-        heap.set(fpos, tmp2); //replaces info at first position with info at second position
-        heap.set(spos, tmp1); //replaces info at second position with info at first position
+        tmp1 = get(fpos); //gets info at first position
+        tmp2 = get(spos); //gets info at second position
+        set(fpos, tmp2); //replaces info at first position with info at second position
+        set(spos, tmp1); //replaces info at second position with info at first position
     }
 
     private int largestChild(int parent){
         int index = 0;
+        E leftValue, rightValue;
 
-        if(heap.get(rightChild(parent)) == null || heap.get(leftChild(parent)) == null){
-            index = - 1;
+        try{
+            leftValue = get(leftChild(parent));
+        } catch (Exception e){
+            leftValue = null;
+        }
+
+        try{
+            rightValue= get(rightChild(parent));
+        } catch (Exception e){
+            rightValue = null;
+        }
+
+        //reaches leaf
+        if(rightValue == null && leftValue == null){
+            return -1;
         }
 
         //if one is there and one is null, return the other
+        if(rightValue == null){
+            return leftChild(parent);
+        } else if(leftValue == null){
+            return rightChild(parent);
+        }
 
-        if (heap.get(rightChild(parent)).compareTo(heap.get(parent)) > 0){
+        //comparing the two values to see what's bigger
+        if (rightValue.compareTo(leftValue) > 0){
             index = rightChild(parent);
         } else {
             index = leftChild(parent);
@@ -48,11 +68,11 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
     // with root at index 0.
     // don't use binary tree for implementing the heap.
     public MaxHeap(){
-        heap = new ArrayList<E>();
+        ArrayList heap = new ArrayList<E>();
     }
     // returns max value
     public E findMax() {
-        return heap.get(0); //largest element is root in a maxHeap
+        return get(0); //largest element is root in a maxHeap
     }
 
     // adds a new value to the heap at the end of the Heap and 
@@ -61,19 +81,20 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
     // throw appropriate exception
     public void addHeap(E val) {
 
+        //tests if value is comparable
         if(!(val instanceof Comparable)){
             throw new InvalidParameterException();
         }
 
-        int index = heap.size(); //place holder
+        int index = size(); //place holder
 
-        heap.add(val); //setting val to new spot in array
+        add(val); //setting val to new spot in array
 
         while(true){
             if(index == 0) {
                 return;
             }
-            if(heap.get(index).compareTo(heap.get(parent(index))) > 0){
+            if(get(index).compareTo(get(parent(index))) > 0){
                 swap(index, parent(index));
                 index = parent(index);
             } else {
@@ -88,8 +109,8 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
     // bounds of the Heap index, namely, 0 ... size()-1.
     // throw appropriate exception
     public E removeHeap() {
-        E value = heap.get(0);
-        heap.set(0, null);
+        E value = get(0);
+        set(0, null);
         int index = 0;
 
 
@@ -99,6 +120,8 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
                 return value;
             //finding largest child
             //moving it up (swapping values)
+            System.out.println("swapping " + index + " with " + swapIndex);
+            System.out.println("value " + get(index) + " with " + get(swapIndex));
             swap(index, swapIndex);
             index = swapIndex;
             //repeating process until nothing is left
@@ -123,8 +146,6 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
                 done = true; //returns done when merge is complete
             }
         }
-        //building heap
-        //creating output list
     }
 
     // merges the other maxheap with this maxheap to produce a new maxHeap.  
@@ -149,7 +170,22 @@ public class MaxHeap<E extends Comparable<E>> extends ArrayList<E>   {
             addHeap(list.get(i));
     }
 
+    public static void main(String[] args){
+        List test = new ArrayList<>();
+        test.add(3);
+        test.add(6);
+        test.add(19);
+        test.add(83);
+        test.add(1);
 
+
+        MaxHeap testHeap = new MaxHeap();
+        testHeap.buildHeap(test);
+
+        testHeap.heapSort(test);
+
+
+    }
 
 
 
