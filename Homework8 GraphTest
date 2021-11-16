@@ -1,0 +1,150 @@
+import org.junit.Before;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class GraphTest {
+
+    private Graph practice;
+    private Graph email;
+    private Graph graph;
+
+    private static final int EMAIL_COMPS = 1065;
+    private static final int EMAIL_MAX = 33696;
+    private static final int EMAIL_TREES = 0;
+    private static final int GRAPH_COMPS = 2496;
+    private static final int GRAPH_MAX = 997485;
+    private static final int GRAPH_TREES = 2475;
+    private static final int BAS_COMPS = 8;
+    private static final int BAS_MAX = 8;
+    private static final int BAS_TREES = 6;
+
+    /**
+     * Practice Graph contains 40 elements:
+     * 6 graphs (2,2,5,5,5,8)
+     * 2 monocyclic (5, 6)
+     * 3 lonely
+     */
+
+
+    /** Testing 1.1 **/
+    @Test
+    public void basicTestComponentsDepth() {
+        practice = new Graph(Graph.TEST_V);
+        practice.graphFromText(Graph.TESTER_PATH);
+
+        assertEquals(BAS_COMPS, practice.connectedDepth());
+    }
+    @Test
+    public void emailTestComponentsDepth() {
+        email = new Graph(Graph.EMAIL_V);
+        email.graphFromText(Graph.FILEPATH);
+
+        assertEquals(EMAIL_COMPS, email.connectedDepth());
+    }
+    @Test
+    public void graphTestComponentsDepth() {
+        graph = new Graph(Graph.GRAPH_V);
+        graph.graphFromText(Graph.GRAPH_PATH);
+
+        assertEquals(GRAPH_COMPS, graph.connectedDepth());
+    }
+
+    /** Testing 1.3 */
+    @Test
+    public void basicTestComponentsBreadth() {
+        practice = new Graph(Graph.TEST_V);
+        practice.graphFromText(Graph.TESTER_PATH);
+        assertEquals(BAS_COMPS, practice.connectedBreadth());
+    }
+    @Test
+    public void emailTestComponentsBreadth() {
+        email = new Graph(Graph.EMAIL_V);
+        email.graphFromText(Graph.FILEPATH);
+
+        assertEquals(EMAIL_COMPS, email.connectedBreadth());
+    }
+    @Test
+    public void graphTestComponentsBreadth() {
+        graph = new Graph(Graph.GRAPH_V);
+        graph.graphFromText(Graph.GRAPH_PATH);
+
+        assertEquals(GRAPH_COMPS, graph.connectedBreadth());
+    }
+
+    /** Testing 1.2 */
+    @Test
+    public void basicTestComponentsEdges() {
+        practice = new Graph(Graph.TEST_V);
+        practice.graphFromText(Graph.TESTER_PATH);
+
+        assertEquals(BAS_COMPS, practice.connectedEdge(Graph.TESTER_PATH));
+    }
+    @Test
+    public void emailTestComponentsEdges() {
+        email = new Graph(Graph.EMAIL_V);
+        email.graphFromText(Graph.FILEPATH);
+
+        assertEquals(EMAIL_COMPS, email.connectedEdge(Graph.FILEPATH));
+    }
+    @Test
+    public void graphTestComponentsEdges() {
+        graph = new Graph(Graph.GRAPH_V);
+        graph.graphFromText(Graph.GRAPH_PATH);
+
+        assertEquals(GRAPH_COMPS, graph.connectedEdge(Graph.FILEPATH));
+    }
+
+    /** Testing 2 */
+    @Test
+    public void basicTestMaxSize() {
+        practice = new Graph(Graph.TEST_V);
+        practice.graphFromText(Graph.TESTER_PATH);
+
+        assertEquals(BAS_MAX, practice.maxComponentSize());
+    }
+    @Test
+    public void emailTestMaxSize() {
+        email = new Graph(Graph.EMAIL_V);
+        email.graphFromText(Graph.FILEPATH);
+
+        assertEquals(EMAIL_MAX, email.maxComponentSize());
+    }
+    @Test
+    public void graphTestMaxSize() {
+        graph = new Graph(Graph.GRAPH_V);
+        graph.graphFromText(Graph.GRAPH_PATH);
+
+        assertEquals(GRAPH_MAX, graph.maxComponentSize());
+    }
+
+    /** Testing 3 */
+
+
+    @Test
+    public void basicTestTreeCount() {
+        practice = new Graph(Graph.TEST_V);
+        practice.graphFromText(Graph.TESTER_PATH);
+
+        assertEquals(BAS_TREES, practice.treeCount());
+    }
+
+
+    @Test
+    public void emailTestTreeCount() {
+        email = new Graph(Graph.EMAIL_V);
+        email.graphFromText(Graph.FILEPATH);
+
+        assertEquals(EMAIL_TREES, email.treeCount());
+    }
+
+    @Test
+    public void graphTestTreeCount() {
+        graph = new Graph(Graph.GRAPH_V);
+        graph.graphFromText(Graph.GRAPH_PATH);
+
+        assertEquals(GRAPH_TREES, graph.treeCount());
+    }
+
+
+
+}
