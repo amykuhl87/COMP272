@@ -1,0 +1,521 @@
+import java.io.File;
+import java.sql.SQLOutput;
+import java.util.*;
+
+public class Graph
+{
+    public static final String FILEPATH = "src/Email-Enron.txt";
+    public static final String TESTER_PATH = "src/practicegraph.txt";
+    public static final String GRAPH_PATH = "src/Graph.txt";
+    public static final int EMAIL_V = 50515; //36691
+    public static final int TEST_V = 41;
+    public static final int GRAPH_V = 1000000;
+    //"/Users/amykuhl/IdeaProjects/COMP272/src/Email-Enron.txt"
+
+    int numVertex;
+    int numEdge;
+    ArrayList<ArrayList<Integer>> graph;
+
+    public Graph () {
+        numVertex =0;
+        numEdge =0;
+        graph = new ArrayList<>();
+
+    }
+
+    public Graph(int vertexCount) {
+
+        numVertex=vertexCount;
+        numEdge=0;
+        graph = new ArrayList<>(numVertex);
+        for (int i=0;i<numVertex;i++)
+            graph.add(new ArrayList<>());
+    }
+
+
+
+    public ArrayList<Integer> getNeighbors(int u) {
+
+        return graph.get(u);
+    }
+
+    public boolean edgePresent(int u, int v) {
+
+        return (graph.get(u).contains(v));
+
+    }
+
+    public void addEdge(int u, int v) {
+        // let's assume that the vertices are already created.
+        if (u>=0 && u<numVertex && v>=0 && v<numVertex) {
+            if (!edgePresent(u,v))
+                graph.get(u).add(v);
+
+            if (!edgePresent(v,u))
+                graph.get(v).add(u);
+            numEdge++;
+        }
+        else throw new IndexOutOfBoundsException();
+
+    }
+
+    /**
+     * Adds edges based on data in a file
+     * @param filepath The file to extract edges from
+     */
+    public void graphFromText(String filepath){
+        ArrayList<String> words = new ArrayList<>();
+
+        try{
+            Scanner s = new Scanner(new File(filepath));
+            while (s.hasNext()) {
+                String first = s.next();
+                String second;
+
+                // Add edge by a different method if comma-separated
+                if (first.contains(",")) {
+                    String[] nums = first.split(",");
+                    first = nums[0];
+                    second = nums[1];
+                } else {
+                    second = s.next();
+                }
+
+                int firstInt = Integer.parseInt(first);
+                int secondInt = Integer.parseInt(second);
+                addEdge(firstInt, secondInt);
+                //System.out.println(first + " " + second);
+            }
+            s.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        for(int i = 0; i < words.size() - 1; i++){
+            String current = words.get(i);
+            String next = words.get(i + 1);
+            if(current.compareTo(next) == 0 || next.length() == 0){
+                words.remove(i + 1);
+                i--;
+            }
+        }
+
+    }
+
+    /**
+     * Uses depth traversal to find connected components
+     * @return Number of connected components
+     */
+    public int connectedDepth(){
+        int value = 0;
+        boolean[] visited = new boolean[graph.size()];
+
+
+        for (int i = 0; i < visited.length; i++) {
+            if(!visited[i] && getNeighbors(i).size() > 0){
+                // For each new connected component
+
+                value++;
+
+                // How we got there, so we can move in and out
+                ArrayList<Integer> steps = new ArrayList<>();
+                steps.add(i);
+                visited[i] = true;
+
+                // Each cycle moves us in or out a step
+                while (steps.size() > 0) {
+                    ArrayList neighbors = getNeighbors(steps.get(steps.size() - 1));
+                    boolean foundNeighbor = false;
+                    int index = 0;
+                    int next = -1;
+
+                    // Find an unvisited neighbor to go to?
+                    while (!foundNeighbor && index < neighbors.size()) {
+                        if (!visited[(int)neighbors.get(index)]){
+                            next = (int)neighbors.get(index);
+                            foundNeighbor = true;
+                        }
+                        index++;
+                    }
+
+                    // Step into a neighbor if there is one, otherwise backtrack
+                    if (!foundNeighbor){
+                        steps.remove(steps.size() - 1);
+                    } else {
+                        steps.add(next);
+                        visited[next] = true;
+                    }
+
+                }
+
+            }
+        }
+
+        return value;
+    }
+
+    /**
+     * Uses breadth traversal to find connected components
+     * @return Number of connected components
+     */
+    public int connectedBreadth(){
+        int value = 0;
+        boolean[] visited = new boolean[graph.size()];
+
+        //create a list of lists
+        //each list will give vertices at that level
+        //first vertex found at level 0
+        //give children of every level 0 vertex depth 1
+        //give all their children depth 0 etc
+
+        for (int i = 0; i < visited.length; i++) {
+            if(!visited[i] && getNeighbors(i).size() > 0) {
+                // Will run for each connected component
+                value++;
+
+                //Each index will store the vertices at that depth
+                ArrayList<ArrayList<Integer>> levels = new ArrayList<>();
+                levels.add(new ArrayList<>());
+
+                levels.get(0).add(i);
+                visited[i] = true;
+
+                int currentLevel = 0;
+
+                // We know to stop when the next level has no children
+                while(levels.get(currentLevel).size() > 0){
+                    currentLevel++;
+                    levels.add(new ArrayList<>());
+
+                    // We will classify this level as any unvisited children of the previous level
+                    for (int parent : levels.get(currentLevel - 1)){
+                        for(int child : getNeighbors(parent)){
+                            if (!visited[child]){
+                                visited[child] = true;
+                                levels.get(currentLevel).add(child);
+                            }
+                        }
+
+                    }
+                }
+
+            }
+
+        }
+
+
+        return value;
+    }
+
+    /**
+     * Uses the list of edges and find/union functions to find connected components
+     * NOTE: This is slow, usually taking 1+ minutes
+     * @param filepath The file to extract edges fron
+     * @return Number of connected components
+     */
+    public int connectedEdge(String filepath) {
+        ArrayList<HashSet> sets = new ArrayList<HashSet>();
+
+        try{
+            Scanner s = new Scanner(new File(filepath));
+            while (s.hasNext()) {
+                String first = s.next();
+                String second;
+
+                // different method if comma-separated
+                if (first.contains(",")) {
+                    String[] nums = first.split(",");
+                    first = nums[0];
+                    second = nums[1];
+                } else {
+                    second = s.next();
+                }
+
+                int firstInt = Integer.parseInt(first);
+                int secondInt = Integer.parseInt(second);
+
+
+                int setOne = -1;
+                int setTwo = -1;
+
+                // to save time, stop once inputs are set
+
+                for (int i = 0; i < sets.size() && setOne < 0; i++){
+                    if (sets.get(i).contains(firstInt)){
+                        setOne = i;
+                    }
+                }
+                for (int i = 0; i < sets.size() && setTwo < 0; i++){
+                    if (sets.get(i).contains(secondInt)){
+                        setTwo = i;
+                    }
+                }
+
+                if (setOne < 0 && setTwo < 0) {
+                    // if we've never seen these numbers before, make a new set
+
+                    HashSet newSet = new HashSet();
+                    newSet.add(firstInt);
+                    newSet.add(secondInt);
+                    sets.add(newSet);
+                } else if (setOne < 0) {
+                    // if only 1 is new...
+                    // we just want to add 1 to 2's list
+
+                    sets.get(setTwo).add(firstInt);
+                } else if (setTwo < 0) {
+                    // if only 2 is new
+                    // we just want to add 2 to 1's list
+
+                    sets.get(setOne).add(secondInt);
+                } else if (setOne != setTwo) {
+                    // Merge sets if they're different
+
+                    int small = Math.min(setOne, setTwo);
+                    int big = Math.max(setOne, setTwo);
+
+                    sets.get(small).addAll(sets.get(big));
+                    sets.remove(big);
+                }
+            }
+            s.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return sets.size();
+    }
+
+    /**
+     * Uses breadth traversal to find max size.
+     * @return Number of connected components
+     */
+    public int maxComponentSize() {
+        int maxSize = 0;
+        boolean[] visited = new boolean[graph.size()];
+
+        for (int i = 0; i < visited.length; i++) {
+            if (!visited[i] && getNeighbors(i).size() > 0) {
+                //for a single connected component
+
+                int thisComponentSize = 1;
+
+                ArrayList<ArrayList<Integer>> levels = new ArrayList<>();
+                levels.add(new ArrayList<>());
+                levels.get(0).add(i);
+                visited[i] = true;
+
+                int currentLevel = 0;
+
+                // We know to stop when the next level has no children
+                while (levels.get(currentLevel).size() > 0) {
+                    currentLevel++;
+                    levels.add(new ArrayList<>());
+
+                    // We will classify this level as any unvisited children of the previous level
+                    for (int parent : levels.get(currentLevel - 1)) {
+                        for (int child : getNeighbors(parent)) {
+                            if (!visited[child]) {
+                                visited[child] = true;
+                                // We found a new vertex! Count it.
+                                thisComponentSize++;
+                                levels.get(currentLevel).add(child);
+                            }
+                        }
+
+                    }
+                }
+
+                // If this connected component was the biggest so far
+                if (thisComponentSize > maxSize) {
+                    maxSize = thisComponentSize;
+                }
+
+            }
+
+        }
+        return maxSize;
+    }
+
+    /**
+     * We want to modify our depth traversal function to count the nodes and edges
+     * Then, a tree if edges = nodes - 1
+     * @return
+     */
+    public int treeCount() {
+
+        int trees = 0;
+        boolean[] visited = new boolean[graph.size()];
+
+
+        for (int i = 0; i < visited.length; i++) {
+            if(!visited[i] && getNeighbors(i).size() > 0 ){
+                // For each new connected component
+
+                // Here's where we need to start counting our nodes and edges
+                int v = 0;
+                int e2 = 0;
+
+                // How we got there, so we can move in and out
+                ArrayList<Integer> steps = new ArrayList<>();
+                steps.add(i);
+
+                // Count our first vertex and edges
+                v++;
+                e2 += getNeighbors(i).size();
+
+                visited[i] = true;
+
+                // Each cycle moves us in or out a step
+                while (steps.size() > 0) {
+                    ArrayList neighbors = getNeighbors(steps.get(steps.size() - 1));
+                    boolean foundNeighbor = false;
+                    int index = 0;
+                    int next = -1;
+
+                    // Find an unvisited neighbor to go to?
+                    while (!foundNeighbor && index < neighbors.size()) {
+                        if (!visited[(int)neighbors.get(index)]){
+                            next = (int)neighbors.get(index);
+                            foundNeighbor = true;
+                        }
+                        index++;
+                    }
+
+                    // Step into a neighbor if there is one, otherwise backtrack
+                    if (!foundNeighbor){
+                        steps.remove(steps.size() - 1);
+                    } else {
+                        steps.add(next);
+                        visited[next] = true;
+
+                        // We found a new vertex here! Adjust vertex and edge count accordingly
+                        v++;
+                        e2 += getNeighbors(next).size();
+                    }
+
+                }
+                int e = e2/2;
+                //definition of a tree
+                if (v - 1 == e) {
+                    //System.out.println(v);
+                    trees++;
+                }
+
+            }
+        }
+
+        return trees;
+
+    }
+
+
+    /**
+     * By definition, a connected component is a tree if it has v-1 edges and at least one edge
+     * Modify the MaxComponentSize method to also check vertices
+     * This function is useful because it stores all nodes for easy edge counting
+     * @return
+     */
+    public int treeCount2() {
+        int trees = 0;
+        boolean[] visited = new boolean[graph.size()];
+
+        for (int i = 0; i < visited.length; i++) {
+
+            //for a single tree
+            if (!visited[i] /*&& getNeighbors(i).size() > 0*/) {
+
+                int thisComponentSize = 1;
+                int dubEdges = 0;
+                boolean binary = true;
+
+                ArrayList<ArrayList<Integer>> levels = new ArrayList<>();
+                levels.add(new ArrayList<>());
+                levels.get(0).add(i);
+                dubEdges += getNeighbors(i).size();
+                if (dubEdges > 1) {
+                    binary = false;
+                    //maybe this should be 2 instead of 3 cuz top?
+                }
+                visited[i] = true;
+
+                int currentLevel = 0;
+
+                // We know to stop when the next level has no children
+                while (levels.get(currentLevel).size() > 0) {
+                    currentLevel++;
+                    levels.add(new ArrayList<>());
+
+                    // We will classify this level as any unvisited children of the previous level
+                    for (int parent : levels.get(currentLevel - 1)) {
+                        for (int child : getNeighbors(parent)) {
+                            if (!visited[child]) {
+                                visited[child] = true;
+                                // We found a new vertex! Count it.
+                                thisComponentSize++;
+                                dubEdges += getNeighbors(child).size();
+                                if (getNeighbors(child).size() > 3) {
+                                    binary = false;
+                                }
+                                levels.get(currentLevel).add(child);
+                            }
+                        }
+                    }
+                }
+
+
+                int edges = dubEdges/2;
+
+                if (edges < thisComponentSize && binary) {
+                    trees++;
+                }
+
+
+
+            }
+
+        }
+        return trees;
+    }
+
+    public static void main(String[] args) {
+        /*
+        Graph graph = new Graph(EMAIL_V);
+        graph.graphFromText(FILEPATH);
+        System.out.println("\nConnected Component Count...");
+        System.out.println("...Using depth search: " + graph.connectedDepth());
+        System.out.println("...Using breadth search: " + graph.connectedBreadth());
+        System.out.println("...Using edge search: " + graph.connectedEdge(FILEPATH));
+        System.out.println("\nMax Connected Component Size: " + graph.maxComponentSize());
+        System.out.println("\nTree Count: " + graph.treeCount());
+
+
+        // Display info for our test
+        Graph graph2 = new Graph(TEST_V);
+        graph2.graphFromText(TESTER_PATH);
+        System.out.println("\nConnected Component Count (Expected 6)...");
+        System.out.println("...Using depth search: " + graph2.connectedDepth());
+        System.out.println("...Using breadth search: " + graph2.connectedBreadth());
+        System.out.println("...Using edge search: " + graph2.connectedEdge(TESTER_PATH));
+        System.out.println("\nMax Connected Component Size (Expected 7): " + graph2.maxComponentSize());
+        System.out.println("\nTree Count (Expected 2): " + graph2.treeCount());
+
+        */
+
+
+        Graph graph3 = new Graph(GRAPH_V);
+        graph3.graphFromText(GRAPH_PATH);
+        int count = 0;
+        for (int i = 0; i < graph3.numVertex; i++) {
+            if (graph3.getNeighbors(i).size() > 0){
+                count++;
+            }
+        }
+        System.out.println(count);
+
+
+
+    }
+
+}
