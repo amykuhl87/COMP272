@@ -1,0 +1,50 @@
+import java.util.*;
+import java.util.HashMap;
+public class UnionFindBasic {
+
+        // links to the parent
+        int[] parents;
+
+    /**
+     * Loads up our parent array
+     * @param vertices
+     */
+    public void fill(ArrayList<Integer> vertices)
+        {
+            parents = new int[vertices.size() + 1];
+            // create a bunch of disjoint sets, all own root
+            for (int v: vertices) {
+                parents[v] = v;
+            }
+        }
+
+    /**
+     * We want the first parent, so loop until we find it
+     * @param vertex We want the label of this
+     * @return label of this vertex
+     */
+    int find(int vertex)
+        {
+            int label = vertex;
+            while (label != parents[label]) {
+                label = parents[label];
+            }
+            return label;
+        }
+
+    /**
+     * Merges two sets together by attaching one to the other
+     * @param a
+     * @param b
+     */
+    void union(int a, int b)
+        {
+
+            System.out.println(a + " " + b);
+             int x = find(a);
+             int y = find(b);
+             parents[x] = y;
+
+
+        }
+    }
