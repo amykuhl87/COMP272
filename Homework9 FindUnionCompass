@@ -1,0 +1,56 @@
+import java.util.*;
+import java.util.HashMap;
+public class UnionFindCompress {
+
+    // links to the parent
+    int[] parents;
+
+    /**
+     * Creates the list of sets
+     * @param vertices
+     */
+    public void fill(ArrayList<Integer> vertices)
+    {
+        parents = new int[vertices.size() + 1];
+        // create a bunch of disjoint sets, all own root
+        for (int v: vertices) {
+            parents[v] = v;
+        }
+    }
+
+    /**
+     * We want to get to the "parentest" parent
+     * Keep going up until we have a label
+     * PATH COMPRESSION: We also adjust our structure for future use
+     * @param vertex
+     * @return
+     */
+    int find(int vertex)
+    {
+        int label = vertex;
+        while (label != parents[label]) {
+            label = parents[label];
+        }
+        while (vertex != label) {
+            int temp = parents[vertex];
+            parents[vertex] = label;
+            vertex = temp;
+        }
+        return label;
+
+    }
+
+    /**
+     * To merge these sets, we just need to attach one set to the other
+     * @param a element of one set
+     * @param b element of another set
+     */
+    void union(int a, int b)
+    {
+        System.out.println(a + " " + b);
+        int labelA = find(a);
+        int labelB = find(b);
+        if (labelA == labelB) return;
+        parents[labelA] = labelB;
+    }
+}
