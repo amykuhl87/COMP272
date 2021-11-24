@@ -1,0 +1,266 @@
+import java.io.File;
+import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.Scanner;
+
+public class Tree {
+
+    /** Use these to run different modes */
+    public static final int BASIC = 0;
+    public static final int COMPRESSED = 1;
+
+    /** Set this to true to see what code is doing in terminal*/
+    public static boolean UPDATES = true;
+
+    /** Required for assignment.*/
+    final static String EDGE_FILEPATH = "src/artist_edges.txt";
+    final static String WEIGHT_FILEPATH = "src/Weights.txt";
+
+    /** Created for testing purposes */
+    final static String TEST_EDGE_FILEPATH = "src/mini_edges.txt";
+    final static String TEST_WEIGHT_FILEPATH = "src/mini_weights.txt";
+
+    /** Change this if we have a list separated by non-whitespace, like commas*/
+    final static String REGEX = "\\s+";
+
+
+    /** Stores our graph info. Nodes not strictly required but reduces uncertainty.*/
+    ArrayList<WeightedEdge> weightedEdges;
+    ArrayList<Integer> nodes;
+
+    /**
+     * Constructs a tree based on data in text files
+     * @param edgeFile Contains all our edges
+     * @param weightFile Contains all weights, rows corresponding to same row in edge file
+     * @param regex How the edge file divides points
+     */
+    public Tree(String edgeFile, String weightFile, String regex) {
+
+        weightedEdges = new ArrayList<>();
+        nodes = new ArrayList<>();
+
+        // Developer tool
+        if (UPDATES) {
+            System.out.println("Building graph (longest step)...");
+        }
+
+        try{
+            // We need to do weights and edges at the same time
+            Scanner edges = new Scanner(new File(edgeFile));
+            Scanner weights = new Scanner(new File(weightFile));
+
+            while (edges.hasNext() && weights.hasNext()) {
+                String edge = edges.nextLine();
+                String weight = weights.nextLine();
+
+                String[] vertices = edge.split(REGEX);
+                WeightedEdge newEdge = new WeightedEdge(Integer.parseInt(vertices[0]), Integer.parseInt(vertices[1]),
+                        Double.parseDouble(weight));
+                weightedEdges.add(newEdge);
+
+                // Let's keep track of the nodes
+                // This isn't strictly necessary, and it will take time,
+                // BUT it keeps us from having to make assumptions on node count
+                if (!nodes.contains(newEdge.v1)) {
+                    nodes.add(newEdge.v1);
+                }
+                if (!nodes.contains(newEdge.v2)) {
+                    nodes.add(newEdge.v2);
+                }
+
+                // Developer tool
+                if (UPDATES) {
+                    System.out.println("Building graph... " + nodes.size() + " nodes & "
+                            + weightedEdges.size() + " edges");
+                }
+
+            }
+            edges.close();
+            weights.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        // Developer tool
+        if (UPDATES) {
+            System.out.println("Graph built with " + weightedEdges.size()
+                    + " edges and " + nodes.size() + " vertices");
+        }
+
+    }
+
+    /**
+     * Gets the total weight of a list of edges
+     * @param edges List of edges to be used
+     * @return Sum of weights of all edges
+     */
+    public double edgeSum(ArrayList<WeightedEdge> edges) {
+        double totalWeight = 0;
+        for (WeightedEdge e : edges) {
+            totalWeight += e.getWeight();
+        }
+        return totalWeight;
+    }
+
+
+    /**
+     * One of the options called by minSpanTree()
+     * Basic union-find function
+     * @return
+     */
+    public ArrayList minSpanTreeBasic() {
+        // Initializing
+        PriorityQueue<WeightedEdge> allEdges = new PriorityQueue<>(weightedEdges);
+        ArrayList<WeightedEdge> minSpan = new ArrayList();
+
+        UnionFindBasic sets = new UnionFindBasic();
+        sets.fill(nodes);
+        int nodeCount = nodes.size();
+
+        while (minSpan.size() < nodeCount - 1) {
+            WeightedEdge e = allEdges.poll();
+            if (sets.find(e.v1) != sets.find(e.v2)) {
+                if (UPDATES) {
+                    System.out.println("(Basic) Generating minSpan... " + (minSpan.size() + 1)  + " / " + (nodeCount-1)
+                            + " (" + (100*(minSpan.size() + 1))/ (nodeCount - 1) + "%)");
+                }
+                sets.union(e.v1, e.v2);
+                minSpan.add(e);
+            }
+        }
+
+        return minSpan;
+    }
+
+    /**
+     * One of the options called by minSpanTree()
+     * Uses path compression to shorten chains while using find()
+     * @return
+     */
+    public ArrayList minSpanTreeCompressed() {
+        // Initializing
+        PriorityQueue<WeightedEdge> allEdges = new PriorityQueue<>(weightedEdges);
+        ArrayList<WeightedEdge> minSpan = new ArrayList();
+
+        UnionFindCompress sets = new UnionFindCompress();
+
+        sets.fill(nodes);
+        int nodeCount = nodes.size();
+
+        while (minSpan.size() < nodeCount - 1) {
+            WeightedEdge e = allEdges.poll();
+            if (sets.find(e.v1) != sets.find(e.v2)) {
+
+                if (UPDATES) {
+                    System.out.println("(Compressed) Generating minSpan... " + (minSpan.size() + 1)  + " / " + (nodeCount-1)
+                            + " (" + (100*(minSpan.size() + 1))/ (nodeCount - 1) + "%)");
+                }
+                sets.union(e.v1, e.v2);
+                minSpan.add(e);
+            }
+
+        }
+
+        return minSpan;
+    }
+
+    /**
+     * CALL THIS ONE IN MAIN
+     * @param method The code corresponding to the method you want to use
+     * @return ArrayList of edges in the minimum span tree
+     */
+    public ArrayList minSpanTree(int method) {
+        switch (method) {
+            case BASIC: return minSpanTreeBasic();
+            case COMPRESSED: return minSpanTreeCompressed();//not done;
+            default: return null;
+        }
+
+    }
+
+    /**
+     * Prints the weights and timing of 2 methods
+     * @param args
+     */
+    public static void main(String[] args) {
+        //819,306 edges and 50,515 vertices in artist_edges.txt
+
+        String edgePath;
+        String weightPath;
+
+        /** Set to true to run a smaller sample with known results */
+        boolean testing = false;
+
+        /** By default, updates will be delivered in terminal. Activate this line to turn off.*/
+        //UPDATES = false;
+
+        if (testing) {
+            edgePath = TEST_EDGE_FILEPATH;
+            weightPath = TEST_WEIGHT_FILEPATH;
+        } else {
+            edgePath = EDGE_FILEPATH;
+            weightPath = WEIGHT_FILEPATH;
+        }
+
+
+
+
+        // Note, all of this can probably be done with a single tree and save time waiting
+        // Multiple trees is for an abundance of caution for testing
+        Tree basic = new Tree(edgePath, weightPath, REGEX);
+        Tree compressed = new Tree(edgePath, weightPath, REGEX);
+
+        // Timing is contained within the single method calls, so the bulky constructor shouldn't affect
+
+        double start1 = System.currentTimeMillis();
+        ArrayList<WeightedEdge> basicTree = basic.minSpanTree(BASIC);
+        double end1 = System.currentTimeMillis();
+
+        double start2 = System.currentTimeMillis();
+        ArrayList<WeightedEdge> compressedTree = compressed.minSpanTree(COMPRESSED);
+        double end2 = System.currentTimeMillis();
+
+
+        System.out.println("\n\nBASIC Sum: " + basic.edgeSum(basicTree));
+        System.out.println("Time: " + (end1-start1) + " ms\n");
+        System.out.println("COMPRESSED Sum: " + compressed.edgeSum(compressedTree));
+        System.out.println("Time: " + (end2-start2) + " ms\n");
+
+
+        System.out.println("Basic Edges: " + basicTree.size() );
+        System.out.println("Basic Nodes: " + basic.nodes.size() );
+        System.out.println("\nCompressed Edges: " + compressedTree.size() );
+        System.out.println("Compressed Nodes: " + compressed.nodes.size() );
+
+        for (WeightedEdge w :basicTree) {
+            try {
+                basic.nodes.remove(basic.nodes.indexOf(w.v1));
+            } catch (Exception e) {
+            }
+            try {
+                basic.nodes.remove(basic.nodes.indexOf(w.v2));
+            } catch (Exception e) {
+            }
+        }
+        for (WeightedEdge w :compressedTree) {
+            try {
+                compressed.nodes.remove(compressed.nodes.indexOf(w.v1));
+            } catch (Exception e) {
+            }
+            try {
+                compressed.nodes.remove(compressed.nodes.indexOf(w.v2));
+            } catch (Exception e) {
+            }
+        }
+
+        System.out.println("\nBasic nodes left: " + basic.nodes.size());
+        System.out.println("Compressed nodes left: " + compressed.nodes.size());
+
+
+
+
+
+
+    }
+
+}
