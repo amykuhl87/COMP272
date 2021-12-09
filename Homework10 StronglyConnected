@@ -1,0 +1,254 @@
+import java.io.File;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
+
+public class StronglyConnected {
+    public static final String FILE = "src/Slashdot0902.txt";
+    public static final int VERTEX_COUNT = 82168;
+
+
+    /**
+     * Make directed graph from text file
+     * @param filepath
+     * @return
+     */
+    public static DirectedGraph buildFromText(String filepath) {
+        DirectedGraph outGraph = new DirectedGraph(VERTEX_COUNT);
+
+        try{
+
+            Scanner edges = new Scanner(new File(filepath));
+            while (edges.hasNext()) {
+
+                String edge = edges.nextLine();
+                String[] parts = edge.split("\t");
+
+                if (parts.length == 2) {
+                    outGraph.addEdge(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+                }
+
+            }
+            edges.close();
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return outGraph;
+    }
+
+
+    /**
+     * This creates a list of the vertices, in order of their finishing number
+     * @param graph
+     * @return
+     */
+    public static ArrayList<Integer> verticesDFT(DirectedGraph graph) {
+        /**for each vertex v, mark v as unvisited and make an empty L */
+        // item at 0 has finishing number of 0, etc
+        ArrayList<Integer> L = new ArrayList();
+        int size = graph.numVertex;
+        boolean[] visited = new boolean[size];
+
+        // should be unnecessary, but just to check
+        for (int i = 0; i < size; i++) {
+            visited[i] = false;
+        }
+
+        /**for each v, if v is unvisited: mark as visited, check the children, then add v to the start of list */
+
+        for (int v = 0; v < size; v++) {
+            if (!visited[v]) {
+
+                // Avoid recursion by storing the parents
+                ArrayList<Integer> history = new ArrayList<>();
+                history.add(v);
+
+                while (history.size() > 0) {
+
+                    // Most recent one we added
+                    int current = history.get(history.size() - 1);
+                    visited[current] = true;
+
+                    // Where we can go from here
+                    ArrayList<Integer> children = graph.getNeighborList(current).getInList();
+
+
+                    int nextChild = -1;
+                    for (int i = 0; i < children.size() && nextChild < 0; i++) {
+                        if (!visited[children.get(i)]) {
+                            nextChild = children.get(i);
+                        }
+                    }
+                    // After this search we can go deeper iff we have a nextChild to go to. Otherwise step back.
+                    if (nextChild == -1) {
+                        // we can consider our recursive function completed at this point because we're not going deeper
+                        // this is where we should prepend to our list
+                        L.add(0, current);
+
+                        // we're at the bottom, step out
+                        history.remove(history.size() -1 );
+                    } else {
+                        // step deeper
+                        history.add(nextChild);
+                    }
+
+                }
+
+            }
+        }
+        return L;
+
+    }
+
+
+
+    /**
+     * Traverse the reverse graph in order.
+     *
+     * @param graph
+     * @return
+     */
+    public static ArrayList<ArrayList<Integer>> findSCCs(DirectedGraph graph) {
+
+        //Note, for simplicity, we'll make the first component of each graph our label
+        ArrayList<ArrayList<Integer>> stronglyConnectedComponents = new ArrayList<>();
+
+        // Lets get the reversed ordered list
+        ArrayList<Integer> L = verticesDFT(graph);
+
+        // We need to traverse again
+        int size = graph.numVertex;
+        boolean[] visited = new boolean[size];
+
+        // should be unnecessary, but just to check
+        for (int i = 0; i < size; i++) {
+            visited[i] = false;
+        }
+
+        //Traverse the list in the order we generated
+
+        for (int v : L) {
+            if (!visited[v]) {
+                // We have found a new connected component!
+                ArrayList<Integer> component = new ArrayList<>();
+
+                // Avoid recursion by storing the parents
+                ArrayList<Integer> history = new ArrayList<>();
+                history.add(v);
+
+                while (history.size() > 0) {
+
+                    // Most recent one we added
+                    int current = history.get(history.size() - 1);
+                    visited[current] = true;
+
+                    // NOTE: We use out this time because running in non-reverse
+                    ArrayList<Integer> children = graph.getNeighborList(current).getOutList();
+
+
+                    int nextChild = -1;
+                    for (int i = 0; i < children.size() && nextChild < 0; i++) {
+                        if (!visited[children.get(i)]) {
+                            nextChild = children.get(i);
+                        }
+                    }
+                    // After this search we can go deeper iff we have a nextChild to go to. Otherwise step back.
+                    if (nextChild == -1) {
+                        // This runs after all the recursion has run, so it's a good way to get to the label last.
+                        component.add(current);
+
+                        // we're at the bottom, step out
+                        history.remove(history.size() -1 );
+                    } else {
+                        // step deeper
+                        history.add(nextChild);
+                    }
+
+                }
+
+                // After we've run through a whole component, add it to the output list if a valid connected component
+                stronglyConnectedComponents.add(component);
+
+
+            }
+        }
+        return stronglyConnectedComponents;
+
+    }
+
+    /**
+     * Note: First element (get(0)) is the label of each component
+     *
+     * We have vertices, each representing a connected component
+     * edge (component1 -> component2) exists if something in component1 has an edge to something in component2
+     *
+     * @param components
+     * @return
+     */
+    public static DirectedGraph reduced(ArrayList<ArrayList<Integer>> components, DirectedGraph g) {
+        DirectedGraph out = new DirectedGraph(components.size());
+
+        // create an edge from v1 to v2 if any component in v1 connects to any component in v2
+        // aka, we need to check all the outs of all the components in v1 and see if any belong to v2
+
+        // This is how we will know the new labels to use in the new graph
+        HashMap<Integer, Integer> newLabels = new HashMap<>();
+
+        // A list of all the neighborLists in this component is inserted in the map under the label
+        for (int i = 0; i < components.size(); i ++) {
+            for (int vertex : components.get(i)) {
+                // vertex will point to the label it goes to
+                newLabels.put(vertex, i);
+            }
+        }
+
+        // check each connected component
+        for (int v1 = 0; v1 < components.size(); v1 ++) {
+            //check each vertex in v1th connected component
+            for (int vertex : components.get(v1)) {
+                // check all of vertex's out (to) neighbors
+                for (int neighbor : g.getNeighborList(vertex).getOutList()) {
+                    // what component is the neighbor in?
+                    int otherSCC = newLabels.get(neighbor);
+                    // create an edge from translated v1 to the other SCC
+                    out.addEdge(v1, otherSCC);
+                }
+            }
+        }
+
+        return out;
+    }
+
+    public static void main(String[] args) {
+        // get the list
+        DirectedGraph graph = buildFromText(FILE);
+        ArrayList<ArrayList<Integer>> components = findSCCs(graph);
+
+        int maxSize = 0;
+
+        for (ArrayList<Integer> component: components) {
+            if (maxSize < component.size()) {
+                maxSize = component.size();
+            }
+        }
+        DirectedGraph reduced = reduced(components, graph);
+        int redEdgeCount = 0;
+        for (int i = 0; i < reduced.numVertex; i ++) {
+            redEdgeCount += reduced.getNeighborList(i).getOutDegree();
+            if (reduced.getNeighborList(i).getOutDegree() > 0) {
+                //System.out.println(reduced.getNeighborList(i).getOutDegree());
+            }
+        }
+
+        System.out.println("\n\nCount: " + components.size() + "\nMax Size: " + maxSize);
+        System.out.println("Reduced graph edges: " + redEdgeCount);
+
+    }
+
+
+
+
+}
