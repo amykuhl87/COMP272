@@ -1,0 +1,195 @@
+import java.io.*;
+import java.util.*;
+public class AirportRoutes {
+
+    public final int AIRPORTS = 9135;
+
+    // stores the edges, with codes defined by newValues
+    ArrayList<Edge> routes;
+    // We need to be able to lookup int from airport num
+    HashMap<String, Integer> newValues;
+    // Every flight, set up in buildFromDirectedEdges
+    DirectedGraph flights;
+    // Networks, set up in buildHubs
+    DirectedGraph hubs;
+    // Lists of lists, each containing all vertexes of given scc, set up in buildHubs
+    ArrayList<ArrayList<Integer>> sccs;
+
+
+    /**
+     * Sets up some empty graphs and lists needed later
+     */
+    public AirportRoutes() {
+        newValues = new HashMap();
+        routes = new ArrayList();
+        flights = new DirectedGraph(AIRPORTS);
+    }
+
+    /**
+     * Simplify a directed graph into a reduced graph
+     */
+    public void buildHubs() {
+        sccs = StronglyConnected.findSCCs(flights);
+        hubs = StronglyConnected.reduced(sccs, flights);
+    }
+    // this method builds the reducedGraph, I call it the Hubs.
+
+    /**
+     * We need to do two things here:
+     * 1) Create a way to lookup numbers from codes
+     * 2) Create a directed graph based on all the routes
+     *
+     * @param airportsFile
+     * @param routesFile
+     */
+    public void readAndStoreData(String airportsFile, String routesFile) {
+        // get started on the directed graph to store flights
+
+        // This will link each code to a new label
+        try {
+            Scanner s_airport = new Scanner(new File(airportsFile));
+            int counter = 0;
+            while (s_airport.hasNext()) {
+
+                String code = s_airport.nextLine();
+                newValues.put(code, counter);
+                counter++;
+            }
+            s_airport.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Store all the edges in their new number format
+        try {
+            Scanner s_routes = new Scanner(new File(routesFile));
+            while (s_routes.hasNext()) {
+                String line = s_routes.nextLine();
+                String[] codes = line.split(" ");
+                // creates an edge by looking up the new labels of each airport
+                routes.add(new Edge(newValues.get(codes[0]), newValues.get(codes[1])));
+            }
+            s_routes.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Simple function to make a graph from our list of edges
+     */
+    public void buildDirectedFromEdges() {
+        for (Edge e : routes) {
+            flights.addEdge(e.v1, e.v2);
+        }
+    }
+
+    /**
+     * We need to find all parts of this new graph with no in edges
+     *
+     * @param port
+     * @return
+     */
+    public int minRoutes(String port) {
+
+        int counter = 0;
+        for (int i = 0; i < hubs.numVertex; i++) {
+            if (hubs.getNeighborList(i).getInDegree() == 0) {
+                counter++;
+            }
+        }
+
+        // we will need to count the DAC we're in as well unless our vertex has in degree of zero
+        // based on the design of our array list, we can just check if this is the first element of any DAC
+        boolean airportIsParent = false;
+        int airportCode = newValues.get(port);
+        for (ArrayList<Integer> network : sccs) {
+            if (network.get(0) == airportCode) {
+                airportIsParent = true;
+            }
+        }
+
+        if (airportIsParent) {
+            return counter - 1;
+        }
+
+        return counter;
+
+    }
+
+    public ArrayList<Integer> getNeighbors(int vertex) {
+        ArrayList out = new ArrayList(flights.getNeighborList(vertex).getInList());
+        out.addAll(flights.getNeighborList(vertex).getOutList());
+        return out;
+    }
+
+    /**
+     * Find number of weakly connected components
+     * We can repurpose our old SCC algorithm, but search both in and out lists when comparing neighbors
+     * @return
+     */
+    public int numFlightNetworks() {
+        int value = 0;
+        boolean[] visited = new boolean[flights.numVertex];
+
+
+        for (int i = 0; i < visited.length; i++) {
+            if(!visited[i]){ //comment out  getNeighbor for graph.txt
+                // For each new connected component
+
+                value++;
+
+                // How we got there, so we can move in and out
+                ArrayList<Integer> steps = new ArrayList<>();
+                steps.add(i);
+                visited[i] = true;
+
+                // Each cycle moves us in or out a step
+                while (steps.size() > 0) {
+                    ArrayList neighbors = getNeighbors(steps.get(steps.size() - 1));
+                    boolean foundNeighbor = false;
+                    int index = 0;
+                    int next = -1;
+
+                    // Find an unvisited neighbor to go to?
+                    while (!foundNeighbor && index < neighbors.size()) {
+                        if (!visited[(int)neighbors.get(index)]){
+                            next = (int)neighbors.get(index);
+                            foundNeighbor = true;
+                        }
+                        index++;
+                    }
+
+                    // Step into a neighbor if there is one, otherwise backtrack
+                    if (!foundNeighbor){
+                        steps.remove(steps.size() - 1);
+                    } else {
+                        steps.add(next);
+                        visited[next] = true;
+                    }
+
+                }
+
+            }
+        }
+
+        return value;
+    }
+
+
+    public static void main(String[] args) {
+        // Sets up basic stuff
+        AirportRoutes ar = new AirportRoutes();
+
+        // Creates our code -> number map and stores our edges as numbers
+        ar.readAndStoreData("src/airports-IATA-codes.txt", "src/routes.txt");
+        // Makes a directed graph from the edge list we created
+        ar.buildDirectedFromEdges();
+        // Reduces into a directed acyclic graph
+        ar.buildHubs();
+        System.out.println("To connect to each airport from ORD, routes needed: " + ar.minRoutes("ORD"));
+        System.out.println("Number of flight networks: " + ar.numFlightNetworks());
+    }
+}
